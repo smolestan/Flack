@@ -1,6 +1,6 @@
 document.addEventListener('DOMContentLoaded', () => {
 
-    document.querySelector('#CreateChannelButton').onclick = createchannel;
+    // document.querySelector('#CreateChannelButton').onclick = createchannel;
 
     // By default, Change Name button is disabled, it appears only if the page was reloaded (as it is a possibility of a new user on the same machine) and a Display Name is already stored (and possibly needs to be changed)
     document.querySelector('#ChangeName').style.display = "none";
