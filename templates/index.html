@@ -1,0 +1,48 @@
+{% extends "layout.html" %}
+
+{% block title %}
+Flack
+{% endblock %}
+
+{% block body %}
+
+<div class="jumbotron text-center">
+    <h2 id="greeting">Please, choose an existing channel, or create a new one</h2>
+    <div class="container mt-5">
+        <form id="loginform">
+            <input id="name" autocomplete="off" autofocus placeholder="Name" type="text">
+            <input id="submit" type="submit">
+            <h6 id="info" style="padding: 1rem">This is an online messaging service. After you sign in with a display
+                name,
+                you will be able to create channels (i.e. chatrooms) to communicate in, as well as see and join existing
+                channels. Once a channel is selected, all users are able to send and receive messages with one another
+                in real
+                time.</h1>
+        </form>
+
+        <form id="CreateChannelForm">
+            <input id="new_channel" autocomplete="off" autofocus placeholder="Channel Name" type="text">
+            <input id="CreateChannel" type="submit" value="Create">
+        </form>
+    </div>
+</div>
+
+<div id="list" class="container py-3 text-center">
+    <h3>List of existing channels:</h3>
+    <table class="table table-hover">
+        <thead>
+            <tr>
+                <th scope="col">Channel name</th>
+            </tr>
+            </thread>
+        <tbody>
+            {% for i in list: %}
+            <tr>
+                <td><a href="/channels/{{ i }}">{{ i }}</a></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% endblock %}
