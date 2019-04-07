@@ -1,16 +1,61 @@
 document.addEventListener('DOMContentLoaded', () => {
 
-    // document.querySelector('#CreateChannelButton').onclick = createchannel;
+    document.querySelector('#CreateChannelForm').onsubmit = () => {
+        const request = new XMLHttpRequest();
+        var new_channel = document.querySelector('#new_channel').value;
+        request.open('POST', '/add_channel');
+        request.onload = () => {
+            const data = JSON.parse(request.responseText);
+            if (data.success) {    
+                document.querySelector('#greeting').innerHTML = "Channel created";
+                var row = document.createElement('tr');
+                var cell = document.createElement('td');
+                var link = document.createElement('a');
+                link.setAttribute('class', 'channel-change');
+                link.setAttribute('data-channel', new_channel);
+                link.setAttribute('href', "#")
+                var cellText = document.createTextNode(new_channel);
+                link.appendChild(cellText);
+                cell.appendChild(link);
+                row.appendChild(cell);
+                document.querySelector('#channeltablebody').appendChild(row);
 
-    // By default, Change Name button is disabled, it appears only if the page was reloaded (as it is a possibility of a new user on the same machine) and a Display Name is already stored (and possibly needs to be changed)
-    document.querySelector('#ChangeName').style.display = "none";
+                document.querySelectorAll('.channel-change').forEach(function(a) {
+                    a.onclick = function() {
+                        let channel = a.dataset.channel;
+                        localStorage.setItem('channel', channel);
+                        ChannelView(channel, name);
+                    };
+                });
+        }
+            else {
+                document.querySelector('#greeting').innerHTML = "Channel already exists";
+            }
+        }
+        const data = new FormData();
+        data.append('new_channel', new_channel);
+        request.send(data);
+        document.querySelector('#new_channel').value = '';
+        return false;
+    };
 
-    // By default, add channel form is disabled
-    document.querySelector('#CreateChannelForm').style.display = "none";
+    document.querySelector('#ChangeNameButton').onclick = () => {
+        var name = document.querySelector('#name').value;
+        if (name) {
+            localStorage.setItem('name', name);
+            ChannelListView(name);
+        }
+        else {
+            SaveNameView();
+        }
+        return false;
+    };
+    
+    document.querySelector('#ChannelListButton').onclick = ChannelListView;
 
     // By default, submit button is disabled
     document.querySelector('#submit').disabled = true;
-    document.querySelector('#CreateChannel').disabled = true;
+    document.querySelector('#CreateChannelButton').disabled = true;
 
     // Enable button only if there is text in the input field
     document.querySelector('#name').onkeyup = () => {
@@ -22,63 +67,101 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.querySelector('#new_channel').onkeyup = () => {
         if (document.querySelector('#new_channel').value.length > 0)
-            document.querySelector('#CreateChannel').disabled = false;
+            document.querySelector('#CreateChannelButton').disabled = false;
         else
-            document.querySelector('#CreateChannel').disabled = true;
+            document.querySelector('#CreateChannelButton').disabled = true;
     }
     
-    function register() {
-        var name = document.querySelector('#name').value;
-        document.querySelector('#brand').innerHTML = "Flack" + ": " + name;
-        localStorage.setItem('name', name);
+    function ChannelView(channel, name) {
+        document.querySelector('#brand').innerHTML = "Flack" + ": " + name + " @ " + channel + " channel";
+        document.querySelector('#greeting').innerHTML = "Please, be polite and humorous";
         document.querySelector('#loginform').style.display = "none";
-        // Hide Change name button after changing before next page reload (as it may be new user)
-        document.querySelector('#ChangeName').style.display = "none";
-        // Stop form from submitting
+        document.querySelector('#CreateChannelForm').style.display = "none";
+        document.querySelector('#ChannelList').style.display = "none";
+        document.querySelector('#ChannelListButton').style.display = "initial";
+        document.querySelector('#ChangeNameButton').style.display = "initial";
+    }
+
+    function ChannelListView(name) {
+        document.querySelector('#brand').innerHTML = "Flack" + ": " + name;
         document.querySelector('#greeting').innerHTML = "Please, choose an existing channel, or create a new one";
-        document.querySelector('#list').style.display = "initial";
-        return false;
-    }
-
-    function changename() {
-        document.querySelector('#loginform').style.display = "initial";
-        document.querySelector('#info').style.display = "none";
-        document.querySelector('#greeting').innerHTML = "Please, provide new name";
-        document.querySelector('#loginform').onsubmit = register;
-    }
-
-    function createchannel() {
-        document.querySelector('#CreateChannelForm').style.display = "initial";
-        document.querySelector('#CreateChannelForm').onsubmit = () => {
-            const request = new XMLHttpRequest();
-            const new_channel = document.querySelector('#new_channel').value;
-            request.open('POST', '/add_channel');
-            request.onload = () => {
-                const data = JSON.parse(request.responseText);
-                if (data.success) {
-                    document.querySelector('#greeting').innerHTML = "Channel created";
-                }
-                else {
-                    document.querySelector('#greeting').innerHTML = "Channel already exists";
-                }
-            }
-            const data = new FormData();
-            data.append('new_channel', new_channel);
-            request.send(data);
-            return false;
-        };
-    };
-
-    if (localStorage.getItem('name')) {
-        let name = localStorage.getItem('name')
-        document.querySelector('#brand').innerHTML = "Flack" + ": " + name;
         document.querySelector('#loginform').style.display = "none";
-        document.querySelector('#ChangeName').style.display = "initial";
-        document.querySelector('#ChangeName').onclick = changename;
+        document.querySelector('#CreateChannelForm').style.display = "initial";
+        document.querySelector('#ChannelList').style.display = "initial";
+        document.querySelector('#ChannelListButton').style.display = "none";
+        document.querySelector('#ChangeNameButton').style.display = "initial";
 
-    } else {
-        document.querySelector('#greeting').innerHTML = "Welcome! <br>Please introduce yourself";
-        document.querySelector('#list').style.display = "none";
-        document.querySelector('#loginform').onsubmit = register;
+        const request = new XMLHttpRequest();
+        request.open('POST', '/channels');
+        request.onload = () => {
+            const data = JSON.parse(request.responseText);
+            if (data.success) {    
+                data.channellist.forEach(createRow);
+                function createRow(value) {
+                    var row = document.createElement('tr');
+                    var cell = document.createElement('td');
+                    var link = document.createElement('a');
+                    link.setAttribute('class', 'channel-change');
+                    link.setAttribute('data-channel', value);
+                    link.setAttribute('href', "#")
+                    var cellText = document.createTextNode(value);
+                    link.appendChild(cellText);
+                    cell.appendChild(link);
+                    row.appendChild(cell);
+                    document.querySelector('#channeltablebody').appendChild(row);
+
+                    document.querySelectorAll('.channel-change').forEach(function(a) {
+                        a.onclick = function() {
+                            let channel = a.dataset.channel;
+                            localStorage.setItem('channel', channel);
+                            ChannelView(channel, name);
+                        };
+                    });
+                
+                } 
+            }
+            else {
+                document.querySelector('#greeting').innerHTML = "There are no channels yet, please create";
+            }
+        }
+        const data = new FormData();
+        request.send(data);
+
+    }
+
+    function SaveNameView() {
+        document.querySelector('#brand').innerHTML = "Flack";
+        document.querySelector('#greeting').innerHTML = "Welcome! <br>Please, introduce yourself";
+        document.querySelector('#loginform').style.display = "initial";
+        document.querySelector('#CreateChannelForm').style.display = "none";
+        document.querySelector('#ChannelList').style.display = "none";
+        document.querySelector('#ChannelListButton').style.display = "none";
+        document.querySelector('#ChangeNameButton').style.display = "none";
+    }
+
+    // Last channel condition
+    if (localStorage.getItem('channel')) {
+        let channel = localStorage.getItem('channel');
+        let name = localStorage.getItem('name');
+        ChannelView(channel, name);
+    }
+    // Channel list condition
+    else if (localStorage.getItem('name')) {
+        let name = localStorage.getItem('name');
+        ChannelListView(name);
+    }
+    // New user condition
+    else {
+        SaveNameView();
+        document.querySelector('#loginform').onsubmit = () => {
+        var name = document.querySelector('#name').value;
+        if (name) {
+            localStorage.setItem('name', name);
+            ChannelListView(name);
+        }
+        else {
+            SaveNameView();
+        }
+        return false;};
     }
 });

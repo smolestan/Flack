@@ -1,14 +1,22 @@
-#list table a:hover {
+#ChannelList table a:hover {
   color: #007bff;
   text-decoration: none;
 }
 
-#list table td a {
+#ChannelList table td a {
   display: block;
   color: #007bff;
   padding: 10px;
 }
 
-#list table td {
+#ChannelList table td {
   padding: 0;
+}
+
+#info {
+  padding: 1rem
+}
+
+#loginform, #CreateChannelForm, #ChannelList, #ChangeName, #ChannelList, #ChannelListButton {
+  display: none;
 }
