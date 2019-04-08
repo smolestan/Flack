@@ -1,5 +1,7 @@
 import os
 import requests
+import json
+import datetime
 
 from flask import Flask, render_template, request, jsonify, flash
 from flask_socketio import SocketIO, emit
@@ -12,7 +14,7 @@ dictionary = {}
 
 @app.route("/", methods=["GET"])
 def index():
-    return render_template('index.html', dictionary=dictionary)
+    return render_template('index.html')
 
 @app.route("/add_channel", methods=["POST"])
 def add_channel():
@@ -20,10 +22,10 @@ def add_channel():
     if new_channel in dictionary:
         return jsonify({"success": False})
     else:
-        dictionary[new_channel] = "created"
+        dictionary[new_channel] = ["channel created"]
         return jsonify({"success": True})
 
-@app.route('/channels/', methods=["POST"])
+@app.route('/channels', methods=["POST"])
 def channels():
     if dictionary:
         channellist = []
@@ -33,3 +35,19 @@ def channels():
     else:
         return jsonify({"success": False})
 
+@socketio.on("submit message")
+def new_message(data):
+    new_message = data["new_message"]
+    channel = data["channel"]
+    dictionary[channel].append(new_message)
+    emit("announce message", {"new_message": new_message}, broadcast=True)
+
+@app.route('/content', methods=["POST"])
+def content():
+    if dictionary:
+        data = json.loads(request.data)
+        channel = data["channel"]
+        messages = dictionary[channel]
+        return jsonify({"success": True, "content": messages})
+    else:
+        return jsonify({"success": False})

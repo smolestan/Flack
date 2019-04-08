@@ -17,6 +17,6 @@
   padding: 1rem
 }
 
-#loginform, #CreateChannelForm, #ChannelList, #ChangeName, #ChannelList, #ChannelListButton {
+#loginform, #CreateChannelForm, #ChannelList, #ChangeName, #ChannelList, #ChannelListButton, #MessagesList {
   display: none;
 }

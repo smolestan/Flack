@@ -1,5 +1,29 @@
 document.addEventListener('DOMContentLoaded', () => {
 
+    // Connect to websocket
+    var socket = io.connect(location.protocol + '//' + document.domain + ':' + location.port);
+
+    // When connected, configure sending information
+    socket.on('connect', () => {
+
+        document.querySelector('#MessageForm').onsubmit = () => {
+            var new_message = document.querySelector('#new_message').value
+            let channel = localStorage.getItem('channel');
+            socket.emit('submit message', {'new_message': new_message, 'channel': channel});
+            document.querySelector('#new_message').value = '';
+            return false;
+        };
+    });
+
+    // When a new message is announced, add to the list
+    socket.on('announce message', data => {
+        msg = `Message: ${data.new_message}`
+        mli = document.createElement('li');
+        mli.innerHTML = msg;
+        document.querySelector('#messages').append(mli);
+    })
+    
+
     document.querySelector('#CreateChannelForm').onsubmit = () => {
         const request = new XMLHttpRequest();
         var new_channel = document.querySelector('#new_channel').value;
@@ -40,10 +64,11 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     document.querySelector('#ChangeNameButton').onclick = () => {
+        localStorage.clear();
         var name = document.querySelector('#name').value;
         if (name) {
             localStorage.setItem('name', name);
-            ChannelListView(name);
+            ChannelListView();
         }
         else {
             SaveNameView();
@@ -51,7 +76,9 @@ document.addEventListener('DOMContentLoaded', () => {
         return false;
     };
     
-    document.querySelector('#ChannelListButton').onclick = ChannelListView;
+    document.querySelector('#ChannelListButton').onclick = function() {
+        ChannelListView();
+    };
 
     // By default, submit button is disabled
     document.querySelector('#submit').disabled = true;
@@ -72,17 +99,38 @@ document.addEventListener('DOMContentLoaded', () => {
             document.querySelector('#CreateChannelButton').disabled = true;
     }
     
-    function ChannelView(channel, name) {
+    function ChannelView() {
+        name = localStorage.getItem('name');
+        channel = localStorage.getItem('channel');
         document.querySelector('#brand').innerHTML = "Flack" + ": " + name + " @ " + channel + " channel";
         document.querySelector('#greeting').innerHTML = "Please, be polite and humorous";
+        document.querySelector('#MessagesList').style.display = "initial";
         document.querySelector('#loginform').style.display = "none";
         document.querySelector('#CreateChannelForm').style.display = "none";
         document.querySelector('#ChannelList').style.display = "none";
         document.querySelector('#ChannelListButton').style.display = "initial";
         document.querySelector('#ChangeNameButton').style.display = "initial";
+
+
+        const request = new XMLHttpRequest();
+        request.open('POST', '/content');
+        request.onload = () => {
+            const data = JSON.parse(request.responseText);
+            if (data.success) {  
+                data.content.forEach(createMsgRow);
+                function createMsgRow(value) {
+                    mli = document.createElement('li');
+                    mli.innerHTML = value;
+                    document.querySelector('#messages').append(mli);
+                }
+            }
+        }
+        var data = JSON.stringify({'channel': channel});
+        request.send(data);
     }
 
-    function ChannelListView(name) {
+    function ChannelListView() {
+        name = localStorage.getItem('name');
         document.querySelector('#brand').innerHTML = "Flack" + ": " + name;
         document.querySelector('#greeting').innerHTML = "Please, choose an existing channel, or create a new one";
         document.querySelector('#loginform').style.display = "none";
@@ -90,12 +138,17 @@ document.addEventListener('DOMContentLoaded', () => {
         document.querySelector('#ChannelList').style.display = "initial";
         document.querySelector('#ChannelListButton').style.display = "none";
         document.querySelector('#ChangeNameButton').style.display = "initial";
+        document.querySelector('#MessagesList').style.display = "none";
 
         const request = new XMLHttpRequest();
         request.open('POST', '/channels');
         request.onload = () => {
             const data = JSON.parse(request.responseText);
-            if (data.success) {    
+            if (data.success) {   
+                var rowCount = channelsTable.rows.length;
+                for (var i = rowCount - 1; i > 0; i--) {
+                    channelsTable.deleteRow(i);
+                } 
                 data.channellist.forEach(createRow);
                 function createRow(value) {
                     var row = document.createElement('tr');
@@ -110,8 +163,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     row.appendChild(cell);
                     document.querySelector('#channeltablebody').appendChild(row);
 
-                    document.querySelectorAll('.channel-change').forEach(function(a) {
-                        a.onclick = function() {
+                    document.querySelectorAll('.channel-change').forEach(a => {
+                        a.onclick = () => {
                             let channel = a.dataset.channel;
                             localStorage.setItem('channel', channel);
                             ChannelView(channel, name);
@@ -137,6 +190,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.querySelector('#ChannelList').style.display = "none";
         document.querySelector('#ChannelListButton').style.display = "none";
         document.querySelector('#ChangeNameButton').style.display = "none";
+        document.querySelector('#MessagesList').style.display = "none";
     }
 
     // Last channel condition
