@@ -6,7 +6,7 @@ Flack
 
 {% block body %}
 
-<div class="jumbotron text-center">
+<div class="container text-center">
     <h2 id="greeting">Please, choose an existing channel, or create a new one</h2>
     <div class="container mt-5">
         <form id="loginform">
@@ -41,8 +41,7 @@ Flack
 </div>
 
 <div id="MessagesList" class="container py-3 text-center">
-    <ul id="messages">
-    
+    <ul id="messages" class="list-group">
     </ul>
     <form id="MessageForm">
         <input id="new_message" autocomplete="off" autofocus placeholder="Your message" type="text">

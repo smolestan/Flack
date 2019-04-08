@@ -17,10 +17,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // When a new message is announced, add to the list
     socket.on('announce message', data => {
-        msg = `Message: ${data.new_message}`
+        msg = `${data.new_message}`
         mli = document.createElement('li');
+        mli.setAttribute('class', 'mli list-group-item-light')
         mli.innerHTML = msg;
         document.querySelector('#messages').append(mli);
+        items = document.querySelectorAll(".mli");
+        last = items[items.length-1];
+        last.scrollIntoView();
     })
     
 
@@ -65,15 +69,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.querySelector('#ChangeNameButton').onclick = () => {
         localStorage.clear();
-        var name = document.querySelector('#name').value;
-        if (name) {
-            localStorage.setItem('name', name);
-            ChannelListView();
-        }
-        else {
-            SaveNameView();
-        }
-        return false;
+        document.querySelector('#name').value = '';
+        SaveNameView();
+        document.querySelector('#loginform').onsubmit = () => {
+            var name = document.querySelector('#name').value;
+            if (name) {
+                localStorage.setItem('name', name);
+                ChannelListView(name);
+            }
+            else {
+                SaveNameView();
+            }
+            return false;
+        };    
     };
     
     document.querySelector('#ChannelListButton').onclick = function() {
@@ -111,17 +119,25 @@ document.addEventListener('DOMContentLoaded', () => {
         document.querySelector('#ChannelListButton').style.display = "initial";
         document.querySelector('#ChangeNameButton').style.display = "initial";
 
-
         const request = new XMLHttpRequest();
         request.open('POST', '/content');
         request.onload = () => {
             const data = JSON.parse(request.responseText);
             if (data.success) {  
+                // Clear the list before filling in
+                root = document.querySelector('#messages');
+                while( root.firstChild ){
+                    root.removeChild( root.firstChild );
+                  }
                 data.content.forEach(createMsgRow);
                 function createMsgRow(value) {
                     mli = document.createElement('li');
+                    mli.setAttribute('class', 'mli list-group-item-light')
                     mli.innerHTML = value;
                     document.querySelector('#messages').append(mli);
+                    items = document.querySelectorAll(".mli");
+                    last = items[items.length-1];
+                    last.scrollIntoView();            
                 }
             }
         }
@@ -208,14 +224,15 @@ document.addEventListener('DOMContentLoaded', () => {
     else {
         SaveNameView();
         document.querySelector('#loginform').onsubmit = () => {
-        var name = document.querySelector('#name').value;
-        if (name) {
-            localStorage.setItem('name', name);
-            ChannelListView(name);
-        }
-        else {
-            SaveNameView();
-        }
-        return false;};
+            var name = document.querySelector('#name').value;
+            if (name) {
+                localStorage.setItem('name', name);
+                ChannelListView(name);
+            }
+            else {
+                SaveNameView();
+            }
+            return false;
+        };
     }
 });

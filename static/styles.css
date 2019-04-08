@@ -20,3 +20,22 @@
 #loginform, #CreateChannelForm, #ChannelList, #ChangeName, #ChannelList, #ChannelListButton, #MessagesList {
   display: none;
 }
+
+#MessagesList ul {
+  height: 10rem;
+  overflow: hidden; 
+  overflow-y: scroll;
+  /* become a flex-container */
+  /* its children will be flex-items */
+  display: flex;
+  /* move flex-items in column */
+  flex-direction: column;
+}
+
+#MessagesList ul :first-child {
+  margin-top: auto;
+}
+
+#messages li {
+  list-style: none;
+}
