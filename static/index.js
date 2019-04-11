@@ -9,7 +9,9 @@ document.addEventListener('DOMContentLoaded', () => {
         document.querySelector('#MessageForm').onsubmit = () => {
             var new_message = document.querySelector('#new_message').value
             let channel = localStorage.getItem('channel');
-            socket.emit('submit message', {'new_message': new_message, 'channel': channel});
+            let name = localStorage.getItem('name');
+            full_message = name + ": " + new_message;
+            socket.emit('submit message', {'new_message': full_message, 'channel': channel});
             document.querySelector('#new_message').value = '';
             return false;
         };
@@ -61,7 +63,9 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
         const data = new FormData();
+        let name = localStorage.getItem('name');
         data.append('new_channel', new_channel);
+        data.append('name', name);
         request.send(data);
         document.querySelector('#new_channel').value = '';
         return false;
@@ -91,6 +95,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // By default, submit button is disabled
     document.querySelector('#submit').disabled = true;
     document.querySelector('#CreateChannelButton').disabled = true;
+    document.querySelector('#SendMessage').disabled = true;
 
     // Enable button only if there is text in the input field
     document.querySelector('#name').onkeyup = () => {
@@ -106,12 +111,19 @@ document.addEventListener('DOMContentLoaded', () => {
         else
             document.querySelector('#CreateChannelButton').disabled = true;
     }
+
+    document.querySelector('#new_message').onkeyup = () => {
+        if (document.querySelector('#new_message').value.length > 0)
+            document.querySelector('#SendMessage').disabled = false;
+        else
+            document.querySelector('#SendMessage').disabled = true;
+    }
     
     function ChannelView() {
         name = localStorage.getItem('name');
         channel = localStorage.getItem('channel');
         document.querySelector('#brand').innerHTML = "Flack" + ": " + name + " @ " + channel + " channel";
-        document.querySelector('#greeting').innerHTML = "Please, be polite and humorous";
+        document.querySelector('#greeting').innerHTML = "Please, be polite and funny";
         document.querySelector('#MessagesList').style.display = "initial";
         document.querySelector('#loginform').style.display = "none";
         document.querySelector('#CreateChannelForm').style.display = "none";
@@ -213,7 +225,21 @@ document.addEventListener('DOMContentLoaded', () => {
     if (localStorage.getItem('channel')) {
         let channel = localStorage.getItem('channel');
         let name = localStorage.getItem('name');
-        ChannelView(channel, name);
+
+        const request = new XMLHttpRequest();
+        request.open('POST', '/content');
+        request.onload = () => {
+            const data = JSON.parse(request.responseText);
+            if (data.success) {  
+                ChannelView(channel, name);
+            }
+            else {
+                ChannelListView(name);
+            }
+        }
+        var data = JSON.stringify({'channel': channel});
+        request.send(data);
+
     }
     // Channel list condition
     else if (localStorage.getItem('name')) {

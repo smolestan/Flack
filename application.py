@@ -5,12 +5,15 @@ import datetime
 
 from flask import Flask, render_template, request, jsonify, flash
 from flask_socketio import SocketIO, emit
+from datetime import datetime
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = os.getenv("SECRET_KEY")
 socketio = SocketIO(app)
 
 dictionary = {}
+timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
 
 @app.route("/", methods=["GET"])
 def index():
@@ -19,10 +22,12 @@ def index():
 @app.route("/add_channel", methods=["POST"])
 def add_channel():
     new_channel = request.form.get("new_channel")
+    name = request.form.get("name")
     if new_channel in dictionary:
         return jsonify({"success": False})
     else:
-        dictionary[new_channel] = ["channel created"]
+        first_msg = timestamp + " - " + "Channel created" " by " + name
+        dictionary[new_channel] = [first_msg]
         return jsonify({"success": True})
 
 @app.route('/channels', methods=["POST"])
@@ -37,9 +42,13 @@ def channels():
 
 @socketio.on("submit message")
 def new_message(data):
-    new_message = data["new_message"]
+    new_message = timestamp + " - " + data["new_message"]
     channel = data["channel"]
-    dictionary[channel].append(new_message)
+    if len(dictionary[channel]) < 100:
+        dictionary[channel].append(new_message)
+    else:
+        del dictionary[channel][0]
+        dictionary[channel].append(new_message)
     emit("announce message", {"new_message": new_message}, broadcast=True)
 
 @app.route('/content', methods=["POST"])
